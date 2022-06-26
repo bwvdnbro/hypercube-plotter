@@ -1,0 +1,9 @@
+stellar_mass_halo_mass_MBN98_centrals_ratio_100:
+  x_range: [1e10, 1e13]
+  y_range: [1e-3, 0.1]
+  fitting_range: [5e10, 5e12]
+  x_log: True
+  y_log: True
+  title: Stellar Mass-Halo Mass relation
+
+

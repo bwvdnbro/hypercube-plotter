@@ -1,0 +1,40 @@
+
+# Specify hypercube parameters, their names, printable names, and values
+parameters:
+  - name: "COLIBREAGN:boost_beta"
+    printname: "$\\beta_{\\rm BH}$"
+    limits: [ 0.0, 0.30 ]
+    default: 0.20
+    log: False
+  - name: "CHIMESCooling:dust_boost_nH_max_cgs"
+    printname: "log $n_{\\rm H}$ dust max boost"
+    limits: [ 1.0, 3.0 ]
+    default: 2.0
+    log: True
+  - name: "COLIBREFeedback:SNII_energy_erg"
+    printname: "$E_{\\rm SNII}$ [$10^{51}$ erg]"
+    limits: [ 1.5, 3.0 ]
+    default: 2.0
+    log: False
+  - name: "COLIBREFeedback:SNII_delta_T_n_0_H_p_cm3"
+    printname: "$n_{\\rm pivot}$ [$\\rm cm^{-3}$]"
+    limits: [ 0.05, 0.5 ]
+    default: 0.3
+    log: False
+  - name: "COLIBREFeedback:SNII_delta_T_K_min"
+    printname: "log $\\mathrm{d}T_{\\rm min}$ [$\\rm K$]"
+    limits: [ 6.0, 7.0 ]
+    default: 6.5
+    log: True
+  - name: "COLIBREStarFormation:star_formation_efficiency"
+    printname: "$\\varepsilon_{\\rm SF}$"
+    limits: [ 0.01, 0.02 ]
+    default: 0.015
+    log: False
+  - name: "CHIMESCooling:shielding_length_factor"
+    printname: "Shielding pre-factor"
+    limits: [ 0.35, 0.7 ]
+    default: 0.6
+    log: False
+
+
