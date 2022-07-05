@@ -60,6 +60,8 @@ if __name__ == '__main__':
         help="Path to yml files with data",
     )
 
+    parser.add_argument("-s", "--single", type=str, default=None, action="store", help="Only emulate the plot with the given name.")
+
     config = parser.parse_args()
 
     print(f"Path to config with params: {config.param_config}")
@@ -73,7 +75,8 @@ if __name__ == '__main__':
                           path_to_plot_config=config.plot_config,
                           path_to_params=config.params,
                           path_to_data=config.data,
-                          path_to_output=config.output)
+                          path_to_output=config.output,
+                          plot_name=config.single)
 
     # Create and train emulators
     hypercube.create_emulators()

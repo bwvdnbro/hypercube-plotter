@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 import yaml
 from swiftemulator.io.swift import load_parameter_files, load_pipeline_outputs
 from swiftemulator.emulators.gaussian_process import GaussianProcessEmulator
@@ -8,6 +8,9 @@ from pathlib import Path
 from glob import glob
 from tqdm import tqdm
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as pl
 
 
 class Plot(object):
@@ -37,13 +40,15 @@ class Hypercube(object):
 
     def __init__(self, path_to_param_config: str, path_to_plot_config: str, path_to_output: str,
                  path_to_data: str,
-                 path_to_params: str):
+                 path_to_params: str,
+                 plot_name: Union[str, None] = None):
 
         self.path_to_param_config = path_to_param_config
         self.path_to_plot_config = path_to_plot_config
         self.path_to_data = path_to_data
         self.path_to_params = path_to_params
         self.path_to_output = path_to_output
+        self.plot_name = plot_name
 
         self.plots: List[Plot] = []
         self.emulators: List[GaussianProcessEmulator] = []
@@ -61,6 +66,7 @@ class Hypercube(object):
             self.parameter_names = [param["name"] for param in self.parameters]
             self.parameter_printable_names = [param["printname"] for param in self.parameters]
             self.log_parameter_names = [param["name"] for param in self.parameters if param["log"]]
+            self.parameter_limits = [param["limits"] for param in self.parameters]
 
             self.parameter_name_default_values = {param["name"]:
                                                   param["default"] for param in self.parameters}
@@ -81,10 +87,14 @@ class Hypercube(object):
                 parameters=self.parameter_names,
                 log_parameters=self.log_parameter_names,
                 parameter_printable_names=self.parameter_printable_names,
+                parameter_limits=self.parameter_limits,
             )
 
             self.model_specification = model_spec
             self.model_parameters = model_params
+
+            for run in self.model_parameters.model_parameters:
+                self.model_parameters.model_parameters[run]["COLIBREFeedback:SNII_energy_erg"] *= 1.e-51
 
             print("Hypercube parameters:")
             print("---------------------")
@@ -98,6 +108,10 @@ class Hypercube(object):
         with open(self.path_to_plot_config, "r") as handler:
             plots_data = yaml.safe_load(handler)
             plot_names = list(plots_data.keys())
+            if not self.plot_name is None:
+                if not self.plot_name in plot_names:
+                    raise AttributeError(f"Invalid plot name: {self.plot_name}! Possible names: {plot_names}.")
+                plot_names = [self.plot_name]
 
             for plot_name in plot_names:
                 plot_data = plots_data[plot_name]
@@ -150,7 +164,19 @@ class Hypercube(object):
 
                 relation_masked_single_run = {"independent": x[mask_total], "dependent": y[mask_total],
                                            "dependent_error": e[mask_total]}
+                """
+                pl.fill_between(x[mask_total], y[mask_total]-e[mask_total], y[mask_total]+e[mask_total], color="C0", alpha=0.4)
+                pl.plot(x[mask_total], y[mask_total])
+                pl.tight_layout()
+                pl.savefig(f"input_{run}.png", dpi=300)
+                pl.close()
+                """
+                pl.plot(x[mask_total], y[mask_total])
                 relation_masked[run] = relation_masked_single_run
+
+            pl.tight_layout()
+            pl.savefig(f"input.png", dpi=300)
+            pl.close()
 
             model = ModelValues(relation_masked)
             gpe = GaussianProcessEmulator()
@@ -160,6 +186,3 @@ class Hypercube(object):
             self.emulators.append(gpe)
 
         return
-
-
-

@@ -52,5 +52,7 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
                 ax.axvline(x=plot.fitting_limits[1], color='grey', lw=3, dashes=(3, 3))
 
             plt.savefig(f"{data.path_to_output}/{plot.name}_{count}.png")
+            fig.clf()
+            plt.close()
 
     return
