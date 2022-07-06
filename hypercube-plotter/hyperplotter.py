@@ -90,5 +90,26 @@ if __name__ == "__main__":
 
     # Create and train emulators
     hypercube.create_emulators()
-    create_sweep_plots(hypercube)
-    create_validation_plots(hypercube)
+    sweep_pages = create_sweep_plots(hypercube)
+    validation_pages = create_validation_plots(hypercube)
+
+    webpage = """<!DOCTYPE html>
+    <head>
+    <title>Parameter sweeps</title>
+    </head> 
+    </body><h1>Parameter sweeps for COLIBRE HyperCube wave 2</h1><h2>Parameter sweeps</h2>"""
+    webpage += "<h3>Per plot</h3>"
+    for page in sweep_pages:
+        if "plot_" in page:
+            webpage += f'<p><a href="{page}.html">{sweep_pages[page]}</a></p>'
+    webpage += "<h3>Per parameter</h3>"
+    for page in sweep_pages:
+        if "param_" in page:
+            webpage += f'<p><a href="{page}.html">{sweep_pages[page]}</a></p>'
+    webpage += "<h2>Emulated simulations (for validation)</h2>"
+    for page in validation_pages:
+        webpage += f'<p><a href="{page}.html">{validation_pages[page]}</a></p>'
+    webpage += "</body>"
+
+    with open(f"{config.output}/index.html", "w") as handle:
+        handle.write(webpage)

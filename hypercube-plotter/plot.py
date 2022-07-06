@@ -21,9 +21,11 @@ def create_plot(
     fitting_limits=None,
     x_units=None,
     y_units=None,
+    labels=None,
 ):
 
     with unyt.matplotlib_support:
+
         for observation in observations:
             if observation.endswith(".hdf5"):
                 for obs in load_observations(
@@ -36,51 +38,71 @@ def create_plot(
             else:
                 raise AttributeError(f"Unknown observational data type: {observation}!")
 
-    col_index = np.linspace(0, 1, len(mock_values.keys()))
+        col_index = np.linspace(0, 1, len(mock_values.keys()))
 
-    for index, mock_name in enumerate(mock_values.keys()):
-        col = plt.cm.viridis(col_index[index])
+        for index, mock_name in enumerate(mock_values.keys()):
+            col = plt.cm.viridis(col_index[index])
 
-        if log_x:
-            ax.set_xscale("log")
-            x = 10.0 ** mock_values[mock_name]["independent"]
-        else:
-            x = mock_values[mock_name]["independent"]
+            if log_x:
+                ax.set_xscale("log")
+                x = 10.0 ** mock_values[mock_name]["independent"]
+            else:
+                x = mock_values[mock_name]["independent"]
 
-        if log_y:
-            ax.set_yscale("log")
-            y = 10.0 ** mock_values[mock_name]["dependent"]
-        else:
             y = mock_values[mock_name]["dependent"]
 
+            yerr_min = None
+            yerr_max = None
+            if "dependent_error" in mock_values[mock_name]:
+                yerr = mock_values[mock_name]["dependent_error"]
+                yerr_min = y - yerr
+                yerr_max = y + yerr
+
+            if log_y:
+                ax.set_yscale("log")
+                y = 10.0 ** y
+                if not yerr_min is None:
+                    yerr_min = 10.0 ** yerr_min
+                    yerr_max = 10.0 ** yerr_max
+
+            if not x_units is None:
+                x = unyt.unyt_array(x, units=x_units)
+            if not y_units is None:
+                y = unyt.unyt_array(y, units=y_units)
+                if not yerr_min is None:
+                    yerr_min = unyt.unyt_array(yerr_min, units=y_units)
+                    yerr_max = unyt.unyt_array(yerr_max, units=y_units)
+
+            if not yerr_min is None:
+                ax.fill_between(x, yerr_min, yerr_max, color=col, alpha=0.2)
+
+            if labels is None:
+                label = f"{parameter_name}={np.round(mock_parameters[mock_name][parameter], 3)}"
+            else:
+                label = labels[mock_name]
+            ax.plot(
+                x,
+                y,
+                color=col,
+                label=label,
+            )
+
+        plt.legend(loc="best")
+
+        if log_x:
+            fitting_limits = 10.0 ** np.array(fitting_limits)
         if not x_units is None:
-            x = unyt.unyt_array(x, units=x_units)
+            x_range = unyt.unyt_array(x_range, units=x_units)
+            fitting_limits = unyt.unyt_array(fitting_limits, units=x_units)
         if not y_units is None:
-            y = unyt.unyt_array(y, units=y_units)
+            y_range = unyt.unyt_array(y_range, units=y_units)
 
-        ax.plot(
-            x,
-            y,
-            color=col,
-            label=f"{parameter_name}={np.round(mock_parameters[mock_name][parameter], 3)}",
-        )
+        ax.set_xlim(*x_range)
+        ax.set_ylim(*y_range)
 
-    plt.legend(loc="best")
-
-    if log_x:
-        fitting_limits = 10.0 ** np.array(fitting_limits)
-    if not x_units is None:
-        x_range = unyt.unyt_array(x_range, units=x_units)
-        fitting_limits = unyt.unyt_array(fitting_limits, units=x_units)
-    if not y_units is None:
-        y_range = unyt.unyt_array(y_range, units=y_units)
-
-    ax.set_xlim(*x_range)
-    ax.set_ylim(*y_range)
-
-    # Indicate emulator fitting rate
-    ax.axvline(x=fitting_limits[0], color="grey", lw=3, dashes=(3, 3))
-    ax.axvline(x=fitting_limits[1], color="grey", lw=3, dashes=(3, 3))
+        # Indicate emulator fitting rate
+        ax.axvline(x=fitting_limits[0], color="grey", lw=3, dashes=(3, 3))
+        ax.axvline(x=fitting_limits[1], color="grey", lw=3, dashes=(3, 3))
 
     return
 
@@ -95,8 +117,12 @@ html_header = """<!DOCTYPE html>
 def create_validation_plots(data: Hypercube):
 
     webpages = {}
+    pages = {}
     for plot in data.plots:
         webpages[f"mock_{plot.name}"] = html_header + f"<h1>Plot: {plot.name}</h1><p>"
+        pages[
+            f"mock_{plot.name}"
+        ] = f"Emulated simulation output (validation) for plot {plot.name}"
     for plot, gpe in zip(data.plots, data.emulators):
         if gpe is None:
             print(f"No emulator for plot {plot.name}.")
@@ -113,6 +139,7 @@ def create_validation_plots(data: Hypercube):
                 "mock": {"independent": x_range, "dependent": pred},
             }
             mock_params = {"sim": model, "mock": model}
+            mock_labels = {"sim": "simulation", "mock": "emulator same params"}
 
             fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
@@ -131,6 +158,7 @@ def create_validation_plots(data: Hypercube):
                 fitting_limits=plot.fitting_limits,
                 x_units=plot.x_units,
                 y_units=plot.y_units,
+                labels=mock_labels,
             )
             plt.savefig(f"{data.path_to_output}/run_{run}_{plot.name}.png")
             fig.clf()
@@ -142,6 +170,8 @@ def create_validation_plots(data: Hypercube):
         with open(f"{data.path_to_output}/{webpage}.html", "w") as handle:
             handle.write(webpages[webpage])
 
+    return pages
+
 
 def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
     """
@@ -149,11 +179,14 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
     """
 
     webpages = {}
+    pages = {}
     for plot in data.plots:
         webpages[f"plot_{plot.name}"] = html_header + f"<h1>Plot: {plot.name}</h1><p>"
+        pages[f"plot_{plot.name}"] = f"Parameter sweeps for plot {plot.name}"
     for parameter in data.parameter_names:
         pname = parameter.replace(":", "_")
         webpages[f"param_{pname}"] = html_header + f"<h1>Parameter: {parameter}</h1><p>"
+        pages[f"param_{pname}"] = f"All plots for sweep of parameter {parameter}"
 
     for plot, gpe in zip(data.plots, data.emulators):
         if gpe is None:
@@ -203,4 +236,4 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
         with open(f"{data.path_to_output}/{webpage}.html", "w") as handle:
             handle.write(webpages[webpage])
 
-    return
+    return pages

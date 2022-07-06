@@ -138,41 +138,43 @@ class Hypercube(object):
     def _load_plots(self):
         with open(self.path_to_plot_config, "r") as handler:
             plots_data = yaml.safe_load(handler)
-            plot_names = list(plots_data.keys())
             if not self.plot_names is None:
+                plot_names = []
                 for plot_name in self.plot_names:
                     if not plot_name in plot_names:
                         raise AttributeError(
                             f"Invalid plot name: {plot_name}! Possible names: {plot_names}."
                         )
+                    plot_names.append(plot_name)
+            else:
+                plot_names = list(plots_data.keys())
 
             for plot_name in plot_names:
-                if plot_name in self.plot_names:
-                    plot_data = plots_data[plot_name]
-                    if "redshift_range" in plot_data:
-                        redshift_range = plot_data["redshift_range"]
-                    else:
-                        redshift_range = [0.0, 1000.0]
-                    x_units = None
-                    if "x_units" in plot_data:
-                        x_units = plot_data["x_units"]
-                    y_units = None
-                    if "y_units" in plot_data:
-                        y_units = plot_data["y_units"]
-                    self.plots.append(
-                        Plot(
-                            name=plot_name,
-                            x_lim=plot_data["x_range"],
-                            y_lim=plot_data["y_range"],
-                            fitting_range=plot_data["fitting_range"],
-                            observations=plot_data["observations"],
-                            redshift_range=redshift_range,
-                            log_x=plot_data["x_log"],
-                            log_y=plot_data["y_log"],
-                            x_units=x_units,
-                            y_units=y_units,
-                        )
+                plot_data = plots_data[plot_name]
+                if "redshift_range" in plot_data:
+                    redshift_range = plot_data["redshift_range"]
+                else:
+                    redshift_range = [0.0, 1000.0]
+                x_units = None
+                if "x_units" in plot_data:
+                    x_units = plot_data["x_units"]
+                y_units = None
+                if "y_units" in plot_data:
+                    y_units = plot_data["y_units"]
+                self.plots.append(
+                    Plot(
+                        name=plot_name,
+                        x_lim=plot_data["x_range"],
+                        y_lim=plot_data["y_range"],
+                        fitting_range=plot_data["fitting_range"],
+                        observations=plot_data["observations"],
+                        redshift_range=redshift_range,
+                        log_x=plot_data["x_log"],
+                        log_y=plot_data["y_log"],
+                        x_units=x_units,
+                        y_units=y_units,
                     )
+                )
         return
 
     def create_emulators(self):
