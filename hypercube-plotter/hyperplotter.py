@@ -1,9 +1,9 @@
 import argparse
 
 from objects import Hypercube
-from plot import create_sweep_plots
+from plot import create_sweep_plots, create_validation_plots
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""DESCRIPTION:
           Given a set of data from a simulation hypercube in a swift-emulator-like format, 
@@ -60,7 +60,14 @@ if __name__ == '__main__':
         help="Path to yml files with data",
     )
 
-    parser.add_argument("-s", "--single", type=str, default=None, action="store", help="Only emulate the plot with the given name.")
+    parser.add_argument(
+        "-s",
+        "--single",
+        type=str,
+        default=None,
+        action="store",
+        help="Only emulate the plot with the given name.",
+    )
 
     config = parser.parse_args()
 
@@ -71,13 +78,16 @@ if __name__ == '__main__':
     print(f"Path to output dir: {config.output}")
 
     # Create instance with metadata
-    hypercube = Hypercube(path_to_param_config=config.param_config,
-                          path_to_plot_config=config.plot_config,
-                          path_to_params=config.params,
-                          path_to_data=config.data,
-                          path_to_output=config.output,
-                          plot_name=config.single)
+    hypercube = Hypercube(
+        path_to_param_config=config.param_config,
+        path_to_plot_config=config.plot_config,
+        path_to_params=config.params,
+        path_to_data=config.data,
+        path_to_output=config.output,
+        plot_name=config.single,
+    )
 
     # Create and train emulators
     hypercube.create_emulators()
     create_sweep_plots(hypercube)
+    create_validation_plots(hypercube)
