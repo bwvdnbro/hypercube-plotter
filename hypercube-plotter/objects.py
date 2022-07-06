@@ -28,6 +28,7 @@ class Plot(object):
         log_y: bool = False,
         x_units: Union[str, None] = None,
         y_units: Union[str, None] = None,
+        boost_factor: Union[float, None] = None,
     ):
         self.name = name
         self.title = title
@@ -40,6 +41,11 @@ class Plot(object):
         self.redshift_range = redshift_range
         self.x_units = x_units
         self.y_units = y_units
+
+        if boost_factor is None:
+            self.boost_factor = 1.0
+        else:
+            self.boost_factor = boost_factor
 
         self.log_x = log_x
         self.log_y = log_y
@@ -163,6 +169,9 @@ class Hypercube(object):
                 y_units = None
                 if "y_units" in plot_data:
                     y_units = plot_data["y_units"]
+                boost_factor = None
+                if "boost_factor" in plot_data:
+                    boost_factor = plot_data["boost_factor"]
                 self.plots.append(
                     Plot(
                         name=plot_name,
@@ -176,6 +185,7 @@ class Hypercube(object):
                         log_y=plot_data["y_log"],
                         x_units=x_units,
                         y_units=y_units,
+                        boost_factor=boost_factor,
                     )
                 )
         return
@@ -189,6 +199,7 @@ class Hypercube(object):
         log_dependent = [plot.name for plot in self.plots if plot.log_y]
         log_independent = [plot.name for plot in self.plots if plot.log_x]
         fitting_limits = [plot.fitting_limits for plot in self.plots]
+        boost_factors = [plot.boost_factor for plot in self.plots]
 
         values, units = load_pipeline_outputs(
             filenames=self.filenames_data,
@@ -199,7 +210,9 @@ class Hypercube(object):
         self.scaling_relations = {}
 
         # Build Gaussian emulator for each plot specified in the plot config
-        for relation_name, fitting_lims in tqdm(zip(scaling_relations, fitting_limits)):
+        for relation_name, fitting_lims, boost_factor in tqdm(
+            zip(scaling_relations, fitting_limits, boost_factors)
+        ):
 
             print(f"Relation: {relation_name}")
             print(f"Fitting lims: [{fitting_lims[0]}, {fitting_lims[1]}]")
@@ -214,7 +227,7 @@ class Hypercube(object):
 
                 x = relation.model_values[run]["independent"]
                 y = relation.model_values[run]["dependent"]
-                e = relation.model_values[run]["dependent_error"]
+                e = boost_factor * relation.model_values[run]["dependent_error"]
 
                 # Create mask (select only values within fitting range
                 # and remove any NaNs or infs)
