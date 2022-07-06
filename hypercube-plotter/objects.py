@@ -221,6 +221,7 @@ class Hypercube(object):
 
             # Dict to be filled
             relation_masked = {}
+            self.scaling_relations[relation_name] = {}
 
             # Apply fitting mask to each run's data separately
             for run in relation.keys():
@@ -237,6 +238,15 @@ class Hypercube(object):
                 mask_finite = np.logical_and(mask_finite_val, mask_finite_err)
                 mask_total = np.logical_and(mask_fit, mask_finite)
 
+                if e[mask_total].sum() == 0.0:
+                    e = boost_factor * np.abs(y)
+
+                self.scaling_relations[relation_name][run] = {
+                    "independent": x,
+                    "dependent": y,
+                    "dependent_error": e,
+                }
+
                 relation_masked_single_run = {
                     "independent": x[mask_total],
                     "dependent": y[mask_total],
@@ -251,8 +261,6 @@ class Hypercube(object):
                 """
                 pl.plot(x[mask_total], y[mask_total])
                 relation_masked[run] = relation_masked_single_run
-
-            self.scaling_relations[relation_name] = relation_masked
 
             pl.tight_layout()
             pl.savefig(f"input.png", dpi=300)

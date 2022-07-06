@@ -160,6 +160,7 @@ def create_validation_plots(data: Hypercube):
                 y_units=plot.y_units,
                 labels=mock_labels,
             )
+            plt.tight_layout()
             plt.savefig(f"{data.path_to_output}/run_{run}_{plot.name}.png")
             fig.clf()
             plt.close()
@@ -181,11 +182,11 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
     webpages = {}
     pages = {}
     for plot in data.plots:
-        webpages[f"plot_{plot.name}"] = html_header + f"<h1>Plot: {plot.title}</h1><p>"
+        webpages[f"plot_{plot.name}"] = html_header + f"<h1>Plot: {plot.title}</h1>"
         pages[f"plot_{plot.name}"] = f"Parameter sweeps for {plot.title}"
     for parameter in data.parameter_names:
         pname = parameter.replace(":", "_")
-        webpages[f"param_{pname}"] = html_header + f"<h1>Parameter: {parameter}</h1><p>"
+        webpages[f"param_{pname}"] = html_header + f"<h1>Parameter: {parameter}</h1>"
         pages[f"param_{pname}"] = f"All plots for sweep of parameter {parameter}"
 
     for plot, gpe in zip(data.plots, data.emulators):
@@ -224,15 +225,20 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
                 y_units=plot.y_units,
             )
 
+            plt.tight_layout()
             plt.savefig(f"{data.path_to_output}/{plot.name}_{count}.png")
             fig.clf()
             plt.close()
-            webpages[f"plot_{plot.name}"] += f'<img src="{plot.name}_{count}.png">'
+            webpages[
+                f"plot_{plot.name}"
+            ] += f'<div style="float: left; width: 600px;"><p>{parameter}</p><p><img width="100%" src="{plot.name}_{count}.png"></p></div>'
             pname = parameter.replace(":", "_")
-            webpages[f"param_{pname}"] += f'<img src="{plot.name}_{count}.png">'
+            webpages[
+                f"param_{pname}"
+            ] += f'<div style="float: left; width: 600px;"><p>{plot.title}</p><p><img src="{plot.name}_{count}.png"></p></div>'
 
     for webpage in webpages:
-        webpages[webpage] += "</p></body>"
+        webpages[webpage] += "</body>"
         with open(f"{data.path_to_output}/{webpage}.html", "w") as handle:
             handle.write(webpages[webpage])
 
