@@ -18,6 +18,7 @@ class Plot(object):
     def __init__(
         self,
         name: str,
+        title: str,
         fitting_range: List[float],
         x_lim: List[float],
         y_lim: List[float],
@@ -29,6 +30,7 @@ class Plot(object):
         y_units: Union[str, None] = None,
     ):
         self.name = name
+        self.title = title
         self.x_min = float(x_lim[0])
         self.x_max = float(x_lim[1])
         self.y_min = float(y_lim[0])
@@ -138,16 +140,16 @@ class Hypercube(object):
     def _load_plots(self):
         with open(self.path_to_plot_config, "r") as handler:
             plots_data = yaml.safe_load(handler)
+            plot_names = list(plots_data.keys())
             if not self.plot_names is None:
-                plot_names = []
+                new_plot_names = []
                 for plot_name in self.plot_names:
                     if not plot_name in plot_names:
                         raise AttributeError(
                             f"Invalid plot name: {plot_name}! Possible names: {plot_names}."
                         )
-                    plot_names.append(plot_name)
-            else:
-                plot_names = list(plots_data.keys())
+                    new_plot_names.append(plot_name)
+                plot_names = new_plot_names
 
             for plot_name in plot_names:
                 plot_data = plots_data[plot_name]
@@ -164,6 +166,7 @@ class Hypercube(object):
                 self.plots.append(
                     Plot(
                         name=plot_name,
+                        title=plot_data["title"],
                         x_lim=plot_data["x_range"],
                         y_lim=plot_data["y_range"],
                         fitting_range=plot_data["fitting_range"],

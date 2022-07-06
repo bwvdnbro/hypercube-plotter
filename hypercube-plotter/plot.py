@@ -119,10 +119,10 @@ def create_validation_plots(data: Hypercube):
     webpages = {}
     pages = {}
     for plot in data.plots:
-        webpages[f"mock_{plot.name}"] = html_header + f"<h1>Plot: {plot.name}</h1><p>"
+        webpages[f"mock_{plot.name}"] = html_header + f"<h1>Plot: {plot.title}</h1><p>"
         pages[
             f"mock_{plot.name}"
-        ] = f"Emulated simulation output (validation) for plot {plot.name}"
+        ] = f"Emulated simulation output (validation) for {plot.title}"
     for plot, gpe in zip(data.plots, data.emulators):
         if gpe is None:
             print(f"No emulator for plot {plot.name}.")
@@ -181,8 +181,8 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
     webpages = {}
     pages = {}
     for plot in data.plots:
-        webpages[f"plot_{plot.name}"] = html_header + f"<h1>Plot: {plot.name}</h1><p>"
-        pages[f"plot_{plot.name}"] = f"Parameter sweeps for plot {plot.name}"
+        webpages[f"plot_{plot.name}"] = html_header + f"<h1>Plot: {plot.title}</h1><p>"
+        pages[f"plot_{plot.name}"] = f"Parameter sweeps for {plot.title}"
     for parameter in data.parameter_names:
         pname = parameter.replace(":", "_")
         webpages[f"param_{pname}"] = html_header + f"<h1>Parameter: {parameter}</h1><p>"
