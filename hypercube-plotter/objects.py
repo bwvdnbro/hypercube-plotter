@@ -25,6 +25,8 @@ class Plot(object):
         redshift_range: List[float],
         log_x: bool = False,
         log_y: bool = False,
+        x_units: Union[str, None] = None,
+        y_units: Union[str, None] = None,
     ):
         self.name = name
         self.x_min = float(x_lim[0])
@@ -34,6 +36,8 @@ class Plot(object):
 
         self.observations = observations
         self.redshift_range = redshift_range
+        self.x_units = x_units
+        self.y_units = y_units
 
         self.log_x = log_x
         self.log_y = log_y
@@ -56,7 +60,7 @@ class Hypercube(object):
         path_to_output: str,
         path_to_data: str,
         path_to_params: str,
-        plot_name: Union[str, None] = None,
+        plot_names: Union[List[str], None] = None,
     ):
 
         self.path_to_param_config = path_to_param_config
@@ -64,7 +68,7 @@ class Hypercube(object):
         self.path_to_data = path_to_data
         self.path_to_params = path_to_params
         self.path_to_output = path_to_output
-        self.plot_name = plot_name
+        self.plot_names = plot_names
 
         self.plots: List[Plot] = []
         self.emulators: List[GaussianProcessEmulator] = []
@@ -135,31 +139,40 @@ class Hypercube(object):
         with open(self.path_to_plot_config, "r") as handler:
             plots_data = yaml.safe_load(handler)
             plot_names = list(plots_data.keys())
-            if not self.plot_name is None:
-                if not self.plot_name in plot_names:
-                    raise AttributeError(
-                        f"Invalid plot name: {self.plot_name}! Possible names: {plot_names}."
-                    )
-                plot_names = [self.plot_name]
+            if not self.plot_names is None:
+                for plot_name in self.plot_names:
+                    if not plot_name in plot_names:
+                        raise AttributeError(
+                            f"Invalid plot name: {plot_name}! Possible names: {plot_names}."
+                        )
 
             for plot_name in plot_names:
-                plot_data = plots_data[plot_name]
-                if "redshift_range" in plot_data:
-                    redshift_range = plot_data["redshift_range"]
-                else:
-                    redshift_range = [0.0, 1000.0]
-                self.plots.append(
-                    Plot(
-                        name=plot_name,
-                        x_lim=plot_data["x_range"],
-                        y_lim=plot_data["y_range"],
-                        fitting_range=plot_data["fitting_range"],
-                        observations=plot_data["observations"],
-                        redshift_range=redshift_range,
-                        log_x=plot_data["x_log"],
-                        log_y=plot_data["y_log"],
+                if plot_name in self.plot_names:
+                    plot_data = plots_data[plot_name]
+                    if "redshift_range" in plot_data:
+                        redshift_range = plot_data["redshift_range"]
+                    else:
+                        redshift_range = [0.0, 1000.0]
+                    x_units = None
+                    if "x_units" in plot_data:
+                        x_units = plot_data["x_units"]
+                    y_units = None
+                    if "y_units" in plot_data:
+                        y_units = plot_data["y_units"]
+                    self.plots.append(
+                        Plot(
+                            name=plot_name,
+                            x_lim=plot_data["x_range"],
+                            y_lim=plot_data["y_range"],
+                            fitting_range=plot_data["fitting_range"],
+                            observations=plot_data["observations"],
+                            redshift_range=redshift_range,
+                            log_x=plot_data["x_log"],
+                            log_y=plot_data["y_log"],
+                            x_units=x_units,
+                            y_units=y_units,
+                        )
                     )
-                )
         return
 
     def create_emulators(self):

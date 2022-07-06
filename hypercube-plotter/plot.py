@@ -19,6 +19,8 @@ def create_plot(
     log_x=True,
     log_y=True,
     fitting_limits=None,
+    x_units=None,
+    y_units=None,
 ):
 
     with unyt.matplotlib_support:
@@ -51,6 +53,11 @@ def create_plot(
         else:
             y = mock_values[mock_name]["dependent"]
 
+        if not x_units is None:
+            x = unyt.unyt_array(x, units=x_units)
+        if not y_units is None:
+            y = unyt.unyt_array(y, units=y_units)
+
         ax.plot(
             x,
             y,
@@ -59,16 +66,21 @@ def create_plot(
         )
 
     plt.legend(loc="best")
+
+    if log_x:
+        fitting_limits = 10.0 ** np.array(fitting_limits)
+    if not x_units is None:
+        x_range = unyt.unyt_array(x_range, units=x_units)
+        fitting_limits = unyt.unyt_array(fitting_limits, units=x_units)
+    if not y_units is None:
+        y_range = unyt.unyt_array(y_range, units=y_units)
+
     ax.set_xlim(*x_range)
     ax.set_ylim(*y_range)
 
     # Indicate emulator fitting rate
-    if log_y:
-        ax.axvline(x=10.0 ** fitting_limits[0], color="grey", lw=3, dashes=(3, 3))
-        ax.axvline(x=10.0 ** fitting_limits[1], color="grey", lw=3, dashes=(3, 3))
-    else:
-        ax.axvline(x=fitting_limits[0], color="grey", lw=3, dashes=(3, 3))
-        ax.axvline(x=fitting_limits[1], color="grey", lw=3, dashes=(3, 3))
+    ax.axvline(x=fitting_limits[0], color="grey", lw=3, dashes=(3, 3))
+    ax.axvline(x=fitting_limits[1], color="grey", lw=3, dashes=(3, 3))
 
     return
 
@@ -117,6 +129,8 @@ def create_validation_plots(data: Hypercube):
                 log_x=plot.log_x,
                 log_y=plot.log_y,
                 fitting_limits=plot.fitting_limits,
+                x_units=plot.x_units,
+                y_units=plot.y_units,
             )
             plt.savefig(f"{data.path_to_output}/run_{run}_{plot.name}.png")
             fig.clf()
@@ -173,6 +187,8 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
                 log_x=plot.log_x,
                 log_y=plot.log_y,
                 fitting_limits=plot.fitting_limits,
+                x_units=plot.x_units,
+                y_units=plot.y_units,
             )
 
             plt.savefig(f"{data.path_to_output}/{plot.name}_{count}.png")

@@ -61,12 +61,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-s",
-        "--single",
+        "-l",
+        "--plot-list",
         type=str,
         default=None,
+        nargs="+",
         action="store",
-        help="Only emulate the plot with the given name.",
+        help="Only emulate the plots with the given name.",
     )
 
     config = parser.parse_args()
@@ -84,7 +85,7 @@ if __name__ == "__main__":
         path_to_params=config.params,
         path_to_data=config.data,
         path_to_output=config.output,
-        plot_name=config.single,
+        plot_names=config.plot_list,
     )
 
     # Create and train emulators
