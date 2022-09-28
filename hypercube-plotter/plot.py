@@ -14,13 +14,13 @@ def create_plot(
     parameter_name,
     x_range,
     y_range,
+    x_units,
+    y_units,
     observations,
     redshift_range,
     log_x=True,
     log_y=True,
     fitting_limits=None,
-    x_units=None,
-    y_units=None,
     labels=None,
 ):
 
@@ -31,7 +31,12 @@ def create_plot(
                 for obs in load_observations(
                     observation, redshift_bracket=redshift_range
                 ):
-                    obs.plot_on_axes(ax, {"color": "k", "alpha": 0.5})
+                    try:
+                      obs.x.convert_to_units(x_units)
+                      obs.y.convert_to_units(y_units)
+                    except unyt.exceptions.UnitConversionError:
+                      raise RuntimeError(f"Unit conversion error for observation \"observation\"!")
+                    obs.plot_on_axes(ax, {"alpha": 0.5})
             elif observation.endswith(".py"):
                 with open(observation, "r") as handle:
                     exec(handle.read())
@@ -141,7 +146,7 @@ def create_validation_plots(data: Hypercube):
             mock_params = {"sim": model, "mock": model}
             mock_labels = {"sim": "simulation", "mock": "emulator same params"}
 
-            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+            fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 
             create_plot(
                 ax,
@@ -151,13 +156,13 @@ def create_validation_plots(data: Hypercube):
                 f"run_{run}_mock",
                 [plot.x_min, plot.x_max],
                 [plot.y_min, plot.y_max],
+                plot.x_units,
+                plot.y_units,
                 plot.observations,
                 plot.redshift_range,
                 log_x=plot.log_x,
                 log_y=plot.log_y,
                 fitting_limits=plot.fitting_limits,
-                x_units=plot.x_units,
-                y_units=plot.y_units,
                 labels=mock_labels,
             )
             plt.tight_layout()
@@ -206,7 +211,7 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
                 data.parameter_name_default_values,
             )
 
-            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+            fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 
             create_plot(
                 ax,
@@ -216,13 +221,13 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
                 name,
                 [plot.x_min, plot.x_max],
                 [plot.y_min, plot.y_max],
+                plot.x_units,
+                plot.y_units,
                 observations=plot.observations,
                 redshift_range=plot.redshift_range,
                 log_x=plot.log_x,
                 log_y=plot.log_y,
                 fitting_limits=plot.fitting_limits,
-                x_units=plot.x_units,
-                y_units=plot.y_units,
             )
 
             plt.tight_layout()
@@ -235,7 +240,7 @@ def create_sweep_plots(data: Hypercube, num_of_lines: int = 6):
             pname = parameter.replace(":", "_")
             webpages[
                 f"param_{pname}"
-            ] += f'<div style="float: left; width: 600px;"><p>{plot.title}</p><p><img src="{plot.name}_{count}.png"></p></div>'
+            ] += f'<div style="float: left; width: 600px;"><p>{plot.title}</p><p><img width="100%" src="{plot.name}_{count}.png"></p></div>'
 
     for webpage in webpages:
         webpages[webpage] += "</body>"

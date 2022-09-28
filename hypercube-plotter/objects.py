@@ -131,6 +131,7 @@ class Hypercube(object):
             self.model_parameters = model_params
 
             for run in self.model_parameters.model_parameters:
+              if "COLIBREFeedback:SNII_energy_erg" in self.model_parameters.model_parameters[run]:
                 self.model_parameters.model_parameters[run][
                     "COLIBREFeedback:SNII_energy_erg"
                 ] *= 1.0e-51
